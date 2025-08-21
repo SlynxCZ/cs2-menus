@@ -117,7 +117,7 @@ public:
     virtual CBaseEntity* CreateEntityByName(const char *pClassName, CEntityIndex iForceEdictIndex) = 0;
     virtual void RemoveEntity(CEntityInstance* pEntity) = 0;
     virtual void AcceptEntityInput(CEntityInstance* pEntity, const char* szInputName, variant_t value = variant_t(""), CEntityInstance *pActivator = nullptr, CEntityInstance *pCaller = nullptr) = 0;
-	virtual void AddEntityIOEvent(CEntityInstance* pEntity, const char* szInputName, variant_t value = variant_t(""), CEntityInstance *pActivator = nullptr, CEntityInstance *pCaller = nullptr, float flDelay = 0) = 0;
+	virtual void AddEntityIOEvent(CEntityInstance* pEntity, const char* szInputName, variant_t value = variant_t(""), CEntityInstance *pActivator = nullptr, CEntityInstance *pCaller = nullptr, float flDelay = 0.0f) = 0;
     virtual CTimer* CreateTimer(float flInterval, std::function<float()> func) = 0;
     virtual void RemoveTimer(CTimer* timer) = 0;
     virtual void HookOnTakeDamage(SourceMM::PluginId id, OnTakeDamageCallback callback) = 0;

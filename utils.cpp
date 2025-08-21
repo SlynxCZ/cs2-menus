@@ -1742,8 +1742,8 @@ void UtilsApi::AcceptEntityInput(CEntityInstance* pEntity, const char* szInputNa
 
 void UtilsApi::AddEntityIOEvent(CEntityInstance* pEntity, const char* szInputName, variant_t value, CEntityInstance *pActivator, CEntityInstance *pCaller, float flDelay)
 {
-	if(UTIL_AcceptInput)
-		UTIL_AcceptInput(pEntity, szInputName, pActivator, pCaller, value, 0, 0LL);
+	if(UTIL_AddEntityIOEvent)
+		UTIL_AddEntityIOEvent(g_pGameEntitySystem, pEntity, szInputName, pActivator, pCaller, value, flDelay, 0, 0LL, 0LL);
 }
 
 void UtilsApi::NextFrame(std::function<void()> fn)
