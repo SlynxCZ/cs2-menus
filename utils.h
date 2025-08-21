@@ -16,7 +16,7 @@
 #include <functional>
 #include "utils.hpp"
 #include <utlstring.h>
-#include <keyvalues.h>
+#include <KeyValues.h>
 #include "CCSPlayerController.h"
 #include "igameeventsystem.h"
 #include <networksystem/inetworkserializer.h>
@@ -296,6 +296,7 @@ public:
 	CBaseEntity* CreateEntityByName(const char *pClassName, CEntityIndex iForceEdictIndex);
 	void RemoveEntity(CEntityInstance* pEntity);
 	void AcceptEntityInput(CEntityInstance* pEntity, const char* szInputName, variant_t value, CEntityInstance *pActivator, CEntityInstance *pCaller);
+	void AddEntityIOEvent(CEntityInstance* pEntity, const char* szInputName, variant_t value, CEntityInstance *pActivator, CEntityInstance *pCaller, float flDelay);
 	void CollisionRulesChanged(CBaseEntity* pEnt);
 	void TeleportEntity(CBaseEntity* pEnt, const Vector *position, const QAngle *angles, const Vector *velocity);
 	

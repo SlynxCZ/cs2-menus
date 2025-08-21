@@ -38,6 +38,9 @@ CGameEntitySystem* GameEntitySystem()
 	return g_pGameEntitySystem;
 }
 
+class GameSessionConfiguration_t {
+};
+
 KeyValues* g_hKVData;
 
 int g_iMenuType[64];
@@ -105,6 +108,7 @@ CBaseEntity* (*UTIL_CreateEntity)(const char *pClassName, CEntityIndex iForceEdi
 void (*UTIL_SetMoveType)(CBaseEntity *pThis, MoveType_t nMoveType, MoveCollide_t nMoveCollide) = nullptr;
 SndOpEventGuid_t (*UTIL_EmitSoundFilter)(const uint64* filter, CEntityIndex ent, const EmitSound_t& params);
 void (*UTIL_AcceptInput)(CEntityInstance* pThis, const char* pInputName, CEntityInstance* pActivator, CEntityInstance* pCaller, const variant_t& pValue, int nOutputID, void* pUnk1) = nullptr;
+void (*UTIL_AddEntityIOEvent)(CEntitySystem* pEntitySystem, CEntityInstance* pThis, const char* pInputName, CEntityInstance* pActivator, CEntityInstance* pCaller, const variant_t& pValue, float delay, int nOutputID, void* pUnk1, void* pUnk2) = nullptr;
 
 // void (*UTIL_ClientPrint)(CBasePlayerController*, int, const char *, const char *, const char *, const char *, const char *) = nullptr;
 // void (*UTIL_ClientPrintAll)(int, const char *, const char *, const char *, const char *, const char *) = nullptr;
@@ -558,6 +562,15 @@ bool Menus::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool la
 		if (!UTIL_AcceptInput)
 		{
 			g_pUtilsApi->ErrorLog("[%s] Failed to find function to get UTIL_AcceptInput", g_PLAPI->GetLogTag());
+		}
+	}
+
+	const char* pszAddEntityIOEvent = g_kvSigs->GetString("UTIL_AddEntityIOEvent");
+	if(pszAddEntityIOEvent && pszAddEntityIOEvent[0]) {
+		UTIL_AddEntityIOEvent = libserver.FindPattern(pszAddEntityIOEvent).RCast< decltype(UTIL_AddEntityIOEvent) >();
+		if (!UTIL_AddEntityIOEvent)
+		{
+			g_pUtilsApi->ErrorLog("[%s] Failed to find function to get UTIL_AddEntityIOEvent", g_PLAPI->GetLogTag());
 		}
 	}
 	
@@ -1725,6 +1738,12 @@ void UtilsApi::AcceptEntityInput(CEntityInstance* pEntity, const char* szInputNa
 {
 	if(UTIL_AcceptInput)
     	UTIL_AcceptInput(pEntity, szInputName, pActivator, pCaller, value, 0, 0LL);
+}
+
+void UtilsApi::AddEntityIOEvent(CEntityInstance* pEntity, const char* szInputName, variant_t value, CEntityInstance *pActivator, CEntityInstance *pCaller, float flDelay)
+{
+	if(UTIL_AcceptInput)
+		UTIL_AcceptInput(pEntity, szInputName, pActivator, pCaller, value, 0, 0LL);
 }
 
 void UtilsApi::NextFrame(std::function<void()> fn)
