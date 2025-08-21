@@ -1,3 +1,3 @@
-The language setting is - addons/configs/core.cfg
+The language setting is - addons/utils/configs/core.cfg
 
-Signatures - addons/configs/signatures.ini
+Signatures - addons/utils/configs/signatures.ini

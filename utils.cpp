@@ -309,7 +309,7 @@ void Menus::AllPluginsLoaded() {
 	{
 		g_pCookies = nullptr;
 		g_hKVData = new KeyValues("Data");
-		const char *pszPath = "addons/data/menus_data.ini";
+		const char *pszPath = "addons/utils/data/menus_data.ini";
 		if (!g_hKVData->LoadFromFile(g_pFullFileSystem, pszPath)) {
 			char szPath2[256];
 			g_SMAPI->Format(szPath2, sizeof(szPath2), "%s/%s", g_SMAPI->GetBaseDir(), pszPath);
@@ -348,7 +348,7 @@ bool SetClientCookie(int iSlot, const char* sCookieName, const char* sData)
 	g_SMAPI->Format(szSteamID, sizeof(szSteamID), "%llu", m_steamID);
 	KeyValues *hData = g_hKVData->FindKey(szSteamID, true);
 	hData->SetString(sCookieName, sData);
-	g_hKVData->SaveToFile(g_pFullFileSystem, "addons/data/menus_data.ini");
+	g_hKVData->SaveToFile(g_pFullFileSystem, "addons/utils/data/menus_data.ini");
 	return true;
 }
 
@@ -421,7 +421,7 @@ bool Menus::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool la
 
 	{
 		KeyValues* g_kvCore = new KeyValues("Core");
-		const char *pszPath = "addons/configs/core.cfg";
+		const char *pszPath = "addons/utils/configs/core.cfg";
 
 		if (!g_kvCore->LoadFromFile(g_pFullFileSystem, pszPath))
 		{
@@ -466,7 +466,7 @@ bool Menus::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool la
 	g_pUtilsApi->LoadTranslations("menus.phrases");
 
 	KeyValues::AutoDelete g_kvSigs("Gamedata");
-	const char *pszPath = "addons/configs/signatures.ini";
+	const char *pszPath = "addons/utils/configs/signatures.ini";
 
 	if (!g_kvSigs->LoadFromFile(g_pFullFileSystem, pszPath))
 	{
@@ -860,7 +860,7 @@ void UtilsApi::LoadTranslations(const char* FileName)
 {
 	KeyValues::AutoDelete g_kvPhrases("Phrases");
 	char pszPath[256];
-	g_SMAPI->Format(pszPath, sizeof(pszPath), "addons/translations/%s.txt", FileName);
+	g_SMAPI->Format(pszPath, sizeof(pszPath), "addons/utils/translations/%s.txt", FileName);
 
 	if (!g_kvPhrases->LoadFromFile(g_pFullFileSystem, pszPath))
 	{
@@ -1850,7 +1850,7 @@ void UtilsApi::LogToFile(const char* filename, const char* msg, ...)
 	va_end(args);
 
 	char szPath[256], szBuffer[2048];
-	g_SMAPI->PathFormat(szPath, sizeof(szPath), "%s/addons/logs/%s.txt", g_SMAPI->GetBaseDir(), filename);
+	g_SMAPI->PathFormat(szPath, sizeof(szPath), "%s/addons/utils/logs/%s.txt", g_SMAPI->GetBaseDir(), filename);
 	g_SMAPI->Format(szBuffer, sizeof(szBuffer), "L %s: %s\n", formatCurrentTime().c_str(), buf);
 	Msg("%s\n", szBuffer);
 	FILE* pFile = fopen(szPath, "a");
@@ -1873,7 +1873,7 @@ void UtilsApi::ErrorLog(const char* msg, ...)
 	ConColorMsg(Color(255, 0, 0, 255), "[Error] %s\n", buf);
 
 	char szPath[256], szBuffer[2048];
-	g_SMAPI->PathFormat(szPath, sizeof(szPath), "%s/addons/logs/%s.txt", g_SMAPI->GetBaseDir(), formatCurrentTime2().c_str());
+	g_SMAPI->PathFormat(szPath, sizeof(szPath), "%s/addons/utils/logs/%s.txt", g_SMAPI->GetBaseDir(), formatCurrentTime2().c_str());
 	g_SMAPI->Format(szBuffer, sizeof(szBuffer), "L %s: %s\n", formatCurrentTime().c_str(), buf);
 
 	FILE* pFile = fopen(szPath, "a");
