@@ -77,8 +77,6 @@ bool g_bStopingUser;
 int g_iTimeoutMenu;
 std::vector<std::string> g_vCommandEater;
 
-int g_iOnTakeDamageAliveId = -1;
-
 SH_DECL_HOOK0_void(IServerGameDLL, GameServerSteamAPIActivated, SH_NOATTRIB, 0);
 SH_DECL_HOOK3_void(IServerGameDLL, GameFrame, SH_NOATTRIB, 0, bool, bool, bool);
 SH_DECL_HOOK2(IGameEventManager2, FireEvent, SH_NOATTRIB, 0, bool, IGameEvent*, bool);
@@ -90,11 +88,8 @@ SH_DECL_HOOK4_void(IServerGameClients, ClientPutInServer, SH_NOATTRIB, 0, CPlaye
 SH_DECL_HOOK6_void(IServerGameClients, OnClientConnected, SH_NOATTRIB, 0, CPlayerSlot, const char*, uint64, const char *, const char *, bool);
 SH_DECL_HOOK6(IServerGameClients, ClientConnect, SH_NOATTRIB, 0, bool, CPlayerSlot, const char*, uint64, const char *, bool, CBufferString *);
 
-SH_DECL_MANUALHOOK1(OnTakeDamage_Alive, 0, 0, 0, bool, CTakeDamageInfoContainer *);
-
 struct SndOpEventGuid_t;
 void (*UTIL_Remove)(CEntityInstance*) = nullptr;
-void (*UTIL_TakeDamage)(CEntityInstance*, CTakeDamageInfo*) = nullptr;
 bool (*UTIL_IsHearingClient)(void* serverClient, int index) = nullptr;
 void (*UTIL_Say)(const CCommandContext& ctx, CCommand& args) = nullptr;
 void (*UTIL_SetModel)(CBaseModelEntity*, const char* szModel) = nullptr;
@@ -117,7 +112,6 @@ using namespace DynLibUtils;
 
 funchook_t* m_SayHook;
 funchook_t* m_SayTeamHook;
-funchook_t* m_TakeDamageHook;
 funchook_t* m_IsHearingClientHook;
 
 bool containsOnlyDigits(const std::string& str) {
@@ -162,41 +156,6 @@ void SayHook(const CCommandContext& ctx, CCommand& args)
 	{
 		UTIL_Say(ctx, args);
 	}
-}
-
-void Hook_TakeDamage(CEntityInstance* pEntity, CTakeDamageInfo* info)
-{
-    if (!pEntity || !info)
-    {
-        UTIL_TakeDamage(pEntity, info);
-        return;
-    }
-
-    CCSPlayerPawn* pPawn = dynamic_cast<CCSPlayerPawn*>(pEntity);
-    if (!pPawn)
-    {
-        UTIL_TakeDamage(pEntity, info);
-        return;
-    }
-
-    auto pController = pPawn->m_hController();
-    if (!pController)
-    {
-        UTIL_TakeDamage(pEntity, info);
-        return;
-    }
-
-    int iPlayerSlot = pController->GetEntityIndex().Get() - 1;
-    if (iPlayerSlot < 0 || iPlayerSlot >= 64)
-    {
-        UTIL_TakeDamage(pEntity, info);
-        return;
-    }
-
-    if (!g_pUtilsApi->SendHookOnTakeDamagePre(iPlayerSlot, info))
-        return;
-
-    UTIL_TakeDamage(pEntity, info);
 }
 
 std::string Colorizer(std::string str)
@@ -507,21 +466,6 @@ bool Menus::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool la
 	// UTIL_ClientPrintAll = libserver.FindPattern("55 48 89 E5 41 57 4D 89 CF 41 56 4D 89 C6 41 55 49 89 CD 41 54 49 89 D4 53 48 8D 5D B0").RCast< decltype(UTIL_ClientPrintAll) >();
 	// if(!UTIL_ClientPrintAll) g_pUtilsApi->ErrorLog("[%s] Failed to find function to get UTIL_ClientPrintAll", g_PLAPI->GetLogTag());
 
-	const char* pszTakeDamage = g_kvSigs->GetString("OnTakeDamagePre");
-	if(pszTakeDamage && pszTakeDamage[0]) {
-		UTIL_TakeDamage = libserver.FindPattern(pszTakeDamage).RCast< decltype(UTIL_TakeDamage) >();
-		if (!UTIL_TakeDamage)
-		{
-			g_pUtilsApi->ErrorLog("[%s] Failed to find function to get UTIL_TakeDamage", g_PLAPI->GetLogTag());
-		}
-		else
-		{
-			m_TakeDamageHook = funchook_create();
-			funchook_prepare(m_TakeDamageHook, (void**)&UTIL_TakeDamage, (void*)Hook_TakeDamage);
-			funchook_install(m_TakeDamageHook, 0);
-		}
-	}
-
 	CModule libengine(engine);
 	const char* pszIsHearingClient = g_kvSigs->GetString("IsHearingClient");
 	if(pszIsHearingClient && pszIsHearingClient[0]) {
@@ -652,16 +596,6 @@ bool Menus::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool la
 	g_iTeleport = g_kvSigs->GetInt("Teleport", 0);
 	g_iRespawn = g_kvSigs->GetInt("Respawn", 0);
 	g_iDropWeapon = g_kvSigs->GetInt("DropWeapon", 0);
-	void* pCCSPlayerPawnVTable = libserver.GetVirtualTableByName("CCSPlayerPawn");
-	if (!pCCSPlayerPawnVTable)
-	{
-		g_pUtilsApi->ErrorLog("[%s] Failed to find CCSPlayerPawn vtable", g_PLAPI->GetLogTag());
-	}
-	else
-	{
-		SH_MANUALHOOK_RECONFIGURE(OnTakeDamage_Alive, g_kvSigs->GetInt("OnTakeDamage_Alive"), 0, 0);
-		g_iOnTakeDamageAliveId = SH_ADD_MANUALDVPHOOK(OnTakeDamage_Alive, pCCSPlayerPawnVTable, SH_MEMBER(this, &Menus::Hook_OnTakeDamage_Alive), false);
-	}
 
 	const char* pszGameEventManager = g_kvSigs->GetString("GetGameEventManager");
 	if(pszGameEventManager && pszGameEventManager[0]) {
@@ -733,19 +667,6 @@ bool Menus::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool la
 	return true;
 }
 
-bool Menus::Hook_OnTakeDamage_Alive(CTakeDamageInfoContainer *pInfoContainer)
-{
-	CCSPlayerPawn *pPawn = META_IFACEPTR(CCSPlayerPawn);
-	if(!pPawn) RETURN_META_VALUE(MRES_IGNORED, true);
-	CBasePlayerController* pPlayerController = pPawn->m_hController();
-    if (pPlayerController)
-	{
-    	int iPlayerSlot = pPlayerController->GetEntityIndex().Get() - 1;
-		g_pUtilsApi->SendHookOnTakeDamage(iPlayerSlot, pInfoContainer);
-	}
-	RETURN_META_VALUE(MRES_IGNORED, true);
-}
-
 bool Menus::Unload(char *error, size_t maxlen)
 {
 	SH_REMOVE_HOOK_MEMFUNC(ICvar, DispatchConCommand, g_pCVar, this, &Menus::OnDispatchConCommand, false);
@@ -759,10 +680,8 @@ bool Menus::Unload(char *error, size_t maxlen)
 	SH_REMOVE_HOOK(IServerGameClients, OnClientConnected, g_pSource2GameClients, SH_MEMBER(this, &Menus::Hook_OnClientConnected), false);
 	SH_REMOVE_HOOK(IServerGameClients, ClientConnect, g_pSource2GameClients, SH_MEMBER(this, &Menus::Hook_ClientConnect), false );
 
-	if(g_iOnTakeDamageAliveId) SH_REMOVE_HOOK_ID(g_iOnTakeDamageAliveId);
 	if(m_SayHook) funchook_destroy(m_SayHook);
 	if(m_SayTeamHook) funchook_destroy(m_SayTeamHook);
-	if(m_TakeDamageHook) funchook_destroy(m_TakeDamageHook);
 
 	ConVar_Unregister();
 	

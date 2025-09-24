@@ -68,7 +68,6 @@ private: // Hooks
 	void Hook_OnClientConnected( CPlayerSlot slot, const char *pszName, uint64 xuid, const char *pszNetworkID, const char *pszAddress, bool bFakePlayer );
 	bool Hook_ClientConnect( CPlayerSlot slot, const char *pszName, uint64 xuid, const char *pszNetworkID, bool unk1, CBufferString *pRejectReason );
 	void Hook_ClientPutInServer( CPlayerSlot slot, char const *pszName, int type, uint64 xuid );
-	bool Hook_OnTakeDamage_Alive(CTakeDamageInfoContainer *pInfoContainer);
 };
 
 class MenusApi : public IMenusApi {
